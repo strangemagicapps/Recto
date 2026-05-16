@@ -70,10 +70,10 @@ public final class ScriptTracker {
     /// moving when recognition is patchy.
     public let allowSingleWordFallback: Bool
 
-    private let tailCharacterCount = 80
-    private let primaryProbeLength = 3
-    private let fallbackProbeLength = 2
-    private let lastResortProbeLength = 1
+    private static let tailCharacterCount = 80
+    private static let primaryProbeLength = 3
+    private static let fallbackProbeLength = 2
+    private static let lastResortProbeLength = 1
 
     /// Creates a tracker for `script`.
     ///
@@ -112,7 +112,7 @@ public final class ScriptTracker {
         let words = script.normalisedWords
         guard currentWordIndex < words.count else { return }
 
-        let tail = String(transcript.suffix(tailCharacterCount))
+        let tail = String(transcript.suffix(Self.tailCharacterCount))
         let probeWords = ScriptParser.parse(tail)
             .normalisedWords
             .filter { !$0.isEmpty }
@@ -121,19 +121,16 @@ public final class ScriptTracker {
         let windowEnd = min(currentWordIndex + lookAheadWindow, words.count)
         guard currentWordIndex < windowEnd else { return }
 
-        var probeLengths = [primaryProbeLength, fallbackProbeLength]
-        if allowSingleWordFallback {
-            probeLengths.append(lastResortProbeLength)
-        }
+        let probeLengths: [Int] = allowSingleWordFallback
+            ? [Self.primaryProbeLength, Self.fallbackProbeLength, Self.lastResortProbeLength]
+            : [Self.primaryProbeLength, Self.fallbackProbeLength]
 
         for length in probeLengths {
             guard probeWords.count >= length else { continue }
-            let probe = Array(probeWords.suffix(length))
-            guard let matchStart = findProbe(
-                probe,
-                in: currentWordIndex ..< windowEnd,
-                words: words
-            ) else { continue }
+            let probe = probeWords.suffix(length)
+            guard let matchStart = words[currentWordIndex ..< windowEnd]
+                .firstRange(of: probe)?.lowerBound
+            else { continue }
 
             let matchEnd = matchStart + length
             let proposed = matchEnd + offset
@@ -166,26 +163,5 @@ public final class ScriptTracker {
     /// Resets the cursor to the beginning of the script.
     public func reset() {
         currentWordIndex = 0
-    }
-
-    private func findProbe(
-        _ probe: [String],
-        in range: Range<Int>,
-        words: [String]
-    ) -> Int? {
-        guard !probe.isEmpty else { return nil }
-        let lastStart = range.upperBound - probe.count
-        guard lastStart >= range.lowerBound else { return nil }
-        for start in range.lowerBound ... lastStart {
-            var matched = true
-            for i in 0 ..< probe.count {
-                if words[start + i] != probe[i] {
-                    matched = false
-                    break
-                }
-            }
-            if matched { return start }
-        }
-        return nil
     }
 }
