@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "236D3F80-472E-4C25-8E56-DE20EA6A245C",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "RectoTests",
+        "name" : "RectoTests"
+      }
+    }
+  ],
+  "version" : 1
+}
