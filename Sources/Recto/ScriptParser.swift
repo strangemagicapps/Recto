@@ -33,41 +33,39 @@ public enum ScriptParser {
         var displayWords: [ParsedScript.DisplayWord] = []
         var normalisedWords: [String] = []
 
-        let scalars = Array(rawText.unicodeScalars)
-        let count = scalars.count
-        var index = 0
+        let scalars = rawText.unicodeScalars
+        var index = scalars.startIndex
+        let end = scalars.endIndex
 
-        while index < count {
-            while index < count, scalars[index].properties.isWhitespace {
-                index += 1
+        while index < end {
+            while index < end, scalars[index].properties.isWhitespace {
+                index = scalars.index(after: index)
             }
-            guard index < count else { break }
+            guard index < end else { break }
 
             let tokenStart = index
-            while index < count, !scalars[index].properties.isWhitespace {
-                index += 1
+            while index < end, !scalars[index].properties.isWhitespace {
+                index = scalars.index(after: index)
             }
-            let tokenScalars = scalars[tokenStart..<index]
-            let tokenText = String(String.UnicodeScalarView(tokenScalars))
+            let tokenSlice = scalars[tokenStart..<index]
 
             var hasNewline = false
             var hasSpace = false
-            while index < count, scalars[index].properties.isWhitespace {
-                let scalar = scalars[index]
-                if isNewline(scalar) {
+            while index < end, scalars[index].properties.isWhitespace {
+                if CharacterSet.newlines.contains(scalars[index]) {
                     hasNewline = true
                 } else {
                     hasSpace = true
                 }
-                index += 1
+                index = scalars.index(after: index)
             }
 
             let id = normalisedWords.count
-            normalisedWords.append(normalise(tokenScalars))
+            normalisedWords.append(normalise(tokenSlice))
             displayWords.append(
                 ParsedScript.DisplayWord(
                     id: id,
-                    text: tokenText,
+                    text: String(tokenSlice),
                     trailingSpace: hasSpace && !hasNewline,
                     trailingNewline: hasNewline
                 )
@@ -82,31 +80,20 @@ public enum ScriptParser {
     }
 
     private static nonisolated func normalise(
-        _ scalars: ArraySlice<Unicode.Scalar>
+        _ scalars: String.UnicodeScalarView.SubSequence
     ) -> String {
+        let alphanumerics = CharacterSet.alphanumerics
         var start = scalars.startIndex
         var end = scalars.endIndex
-        while start < end, !isAlphanumeric(scalars[start]) {
-            start += 1
+        while start < end, !alphanumerics.contains(scalars[start]) {
+            start = scalars.index(after: start)
         }
-        while end > start, !isAlphanumeric(scalars[end - 1]) {
-            end -= 1
+        while end > start {
+            let prev = scalars.index(before: end)
+            if alphanumerics.contains(scalars[prev]) { break }
+            end = prev
         }
         guard start < end else { return "" }
-        let trimmed = String(String.UnicodeScalarView(scalars[start..<end]))
-        return trimmed.lowercased()
-    }
-
-    private static nonisolated func isAlphanumeric(_ scalar: Unicode.Scalar) -> Bool {
-        CharacterSet.alphanumerics.contains(scalar)
-    }
-
-    private static nonisolated func isNewline(_ scalar: Unicode.Scalar) -> Bool {
-        switch scalar.value {
-        case 0x000A, 0x000B, 0x000C, 0x000D, 0x0085, 0x2028, 0x2029:
-            return true
-        default:
-            return false
-        }
+        return String(scalars[start..<end]).lowercased()
     }
 }
