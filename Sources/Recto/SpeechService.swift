@@ -251,6 +251,11 @@ public actor SpeechService {
     /// remains usable. Buffers submitted before a successful
     /// ``prepare()`` (or after a fatal failure) are silently ignored.
     ///
+    /// Callers driving the service from `AVAudioEngine` should bridge
+    /// each `AVAudioPCMBuffer` through
+    /// ``AudioBufferConverter/sampleBuffer(from:presentationTime:)``
+    /// first.
+    ///
     /// - Parameter buffer: A `CMSampleBuffer` of PCM audio.
     public func consume(_ buffer: CMSampleBuffer) async {
         guard !isFinished, modelState == .ready,

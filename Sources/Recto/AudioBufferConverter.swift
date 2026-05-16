@@ -2,8 +2,8 @@ import AVFoundation
 import CoreMedia
 import Foundation
 
-/// Converts ``AVAudioPCMBuffer`` instances produced by `AVAudioEngine`
-/// taps into ``CMSampleBuffer`` instances accepted by
+/// Converts `AVAudioPCMBuffer` instances produced by `AVAudioEngine`
+/// taps into `CMSampleBuffer` instances accepted by
 /// ``SpeechService/consume(_:)``.
 ///
 /// The conversion is identical on iOS and macOS, which is why it lives

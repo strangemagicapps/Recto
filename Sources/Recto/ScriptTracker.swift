@@ -107,6 +107,10 @@ public final class ScriptTracker {
     /// forward-only: a transcript whose tail matches earlier in the
     /// script than the current cursor never moves the cursor backwards.
     ///
+    /// This method is intended to be driven from
+    /// ``SpeechService/transcripts``; each value yielded by that stream
+    /// can be passed in unchanged.
+    ///
     /// - Parameter transcript: The cumulative recognised text so far.
     public func consume(transcript: String) {
         let words = script.normalisedWords
