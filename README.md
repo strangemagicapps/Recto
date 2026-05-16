@@ -137,6 +137,22 @@ let tracker = ScriptTracker(
 - Public symbols use US-English spelling where it matches Apple
   convention (e.g. `Color`, `synchronize`).
 
+## Releases
+
+Releases are managed by [release-please](https://github.com/googleapis/release-please).
+Merges to `main` open or update a release PR that maintains
+`CHANGELOG.md`, bumps `version.txt`, and — when merged — creates the
+matching git tag and GitHub Release. PR titles (the squash-merge commit
+subject) should follow
+[Conventional Commits](https://www.conventionalcommits.org/), e.g.:
+
+- `feat: add streaming transcript filter` → minor bump
+- `fix: handle empty script in tracker` → patch bump
+- `feat!: rename SpeechService.consume` → major bump (after 1.0.0; before
+  1.0.0 this is treated as a minor bump per the config)
+- `docs:`, `chore:`, `refactor:`, `test:`, `build:`, `ci:` → no version
+  bump
+
 ## Licence
 
 [MIT](./LICENSE)
