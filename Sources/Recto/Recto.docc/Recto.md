@@ -51,22 +51,7 @@ text they both rest on.
 
 The five types compose into a single audio-to-cursor pipeline:
 
-```
-AVAudioPCMBuffer  ──►  AudioBufferConverter  ──►  CMSampleBuffer
-                                                       │
-                                                       ▼
-                                                 SpeechService
-                                                       │
-                                                       ▼ transcripts (AsyncStream<String>)
-                                                       │
-                                                       ▼
-                                                 ScriptTracker
-                                                       │
-                                                       ▼ currentWordIndex
-                                                       │
-                                                       ▼
-                                                       UI (SwiftUI / AppKit)
-```
+![Recto pipeline: AVAudioPCMBuffer flows through AudioBufferConverter to CMSampleBuffer, into SpeechService, whose transcripts stream feeds ScriptTracker, whose currentWordIndex drives the UI.](pipeline)
 
 iOS apps that already produce `CMSampleBuffer`s — for example via
 `AVCaptureSession` — can skip the converter and feed buffers directly

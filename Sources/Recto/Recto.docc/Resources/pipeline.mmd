@@ -1,0 +1,5 @@
+flowchart TD
+    A[AVAudioPCMBuffer] -->|AudioBufferConverter| B[CMSampleBuffer]
+    B --> C[SpeechService]
+    C -->|transcripts: AsyncStream&lt;String&gt;| D[ScriptTracker]
+    D -->|currentWordIndex| E[UI: SwiftUI / AppKit]
