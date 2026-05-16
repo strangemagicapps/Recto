@@ -10,6 +10,7 @@
   "packages": {
     ".": {
       "package-name": "Recto",
+      "release-as": "0.1.0",
       "bootstrap-sha": "2637ac53b472ce725204f24bfb0cdd49be5adbad",
       "changelog-sections": [
         { "type": "feat", "section": "Features" },
