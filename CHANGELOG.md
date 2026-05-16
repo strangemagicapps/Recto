@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/strangemagicapps/Recto/compare/0.1.0...0.1.1) (2026-05-16)
+
+
+### Bug Fixes
+
+* **speech:** use callback-based AVAudioConverter for SR conversion ([88ec8dc](https://github.com/strangemagicapps/Recto/commit/88ec8dcc099d6a6c6410257dcd22fb0ad489845e))
+
 ## 0.1.0 (2026-05-16)
 
 Initial public release of Recto. The v1 surface is the script-following
