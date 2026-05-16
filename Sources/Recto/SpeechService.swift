@@ -1,4 +1,4 @@
-import AVFoundation
+@preconcurrency import AVFoundation
 import CoreMedia
 import Foundation
 import Speech
@@ -409,9 +409,23 @@ public actor SpeechService {
             return nil
         }
 
-        do {
-            try converter.convert(to: outputBuffer, from: inputBuffer)
-        } catch {
+        // Use the callback-based convert API: it supports sample-rate conversion
+        // and surfaces failures as Swift errors. The single-buffer
+        // `convert(to:from:)` overload throws an Obj-C NSException (uncatchable
+        // from Swift) when source and destination sample rates differ.
+        final class InputState: @unchecked Sendable { var supplied = false }
+        let state = InputState()
+        var convertError: NSError?
+        let status = converter.convert(to: outputBuffer, error: &convertError) { _, outStatus in
+            if state.supplied {
+                outStatus.pointee = .noDataNow
+                return nil
+            }
+            state.supplied = true
+            outStatus.pointee = .haveData
+            return inputBuffer
+        }
+        guard status != .error, convertError == nil, outputBuffer.frameLength > 0 else {
             return nil
         }
         return outputBuffer
