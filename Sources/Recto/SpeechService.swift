@@ -103,7 +103,6 @@ public actor SpeechService {
     private var transcriber: SpeechTranscriber?
     private var analyzer: SpeechAnalyzer?
     private var inputBuilder: AsyncStream<AnalyzerInput>.Continuation?
-    private var analyzerTask: Task<Void, Never>?
     private var resultsTask: Task<Void, Never>?
     private var progressTask: Task<Void, Never>?
 
@@ -297,7 +296,7 @@ public actor SpeechService {
     }
 
     private func updateDownloadProgress(_ fraction: Double) {
-        guard case .downloading = modelState else { return }
+        guard case .downloading(let previous) = modelState, previous != fraction else { return }
         modelState = .downloading(progress: fraction)
     }
 
@@ -349,8 +348,6 @@ public actor SpeechService {
         progressTask = nil
         resultsTask?.cancel()
         resultsTask = nil
-        analyzerTask?.cancel()
-        analyzerTask = nil
 
         inputBuilder?.finish()
         inputBuilder = nil
@@ -365,14 +362,10 @@ public actor SpeechService {
         from sampleBuffer: CMSampleBuffer,
         targetFormat: AVAudioFormat
     ) -> AVAudioPCMBuffer? {
-        guard let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer),
-              let asbdPointer = CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription) else {
+        guard let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) else {
             return nil
         }
-        var asbd = asbdPointer.pointee
-        guard let inputFormat = AVAudioFormat(streamDescription: &asbd) else {
-            return nil
-        }
+        let inputFormat = AVAudioFormat(cmAudioFormatDescription: formatDescription)
 
         let frameCount = AVAudioFrameCount(CMSampleBufferGetNumSamples(sampleBuffer))
         guard frameCount > 0,
@@ -392,14 +385,11 @@ public actor SpeechService {
         )
         guard copyStatus == noErr else { return nil }
 
-        if inputFormat.sampleRate == targetFormat.sampleRate,
-           inputFormat.channelCount == targetFormat.channelCount,
-           inputFormat.commonFormat == targetFormat.commonFormat,
-           inputFormat.isInterleaved == targetFormat.isInterleaved {
+        if inputFormat.isEqual(targetFormat) {
             return inputBuffer
         }
 
-        if converter == nil || converterInputFormat?.settings as NSDictionary? != inputFormat.settings as NSDictionary? {
+        if converter == nil || converterInputFormat?.isEqual(inputFormat) != true {
             converter = AVAudioConverter(from: inputFormat, to: targetFormat)
             converterInputFormat = inputFormat
         }
