@@ -35,8 +35,8 @@ text they both rest on.
 ### What's deliberately not
 
 - No UI. Consumers render the script themselves; ``ScriptTracker`` is
-  observable so SwiftUI views can bind to ``ScriptTracker/currentWordIndex``
-  directly.
+  observable so SwiftUI views can bind to
+  ``ScriptTracker/currentDisplayIndex`` directly.
 - No persistence. Scripts are parsed from raw text supplied by the
   caller; saving and loading are the consuming app's responsibility.
 - No capture pipeline. Recto accepts already-captured audio buffers; it
@@ -51,7 +51,7 @@ text they both rest on.
 
 The five types compose into a single audio-to-cursor pipeline:
 
-![Recto pipeline: AVAudioPCMBuffer flows through AudioBufferConverter to CMSampleBuffer, into SpeechService, whose transcripts stream feeds ScriptTracker, whose currentWordIndex drives the UI.](pipeline)
+![Recto pipeline: AVAudioPCMBuffer flows through AudioBufferConverter to CMSampleBuffer, into SpeechService, whose transcripts stream feeds ScriptTracker, whose currentDisplayIndex drives the UI.](pipeline)
 
 iOS apps that already produce `CMSampleBuffer`s — for example via
 `AVCaptureSession` — can skip the converter and feed buffers directly

@@ -60,11 +60,16 @@ public enum ScriptParser {
                 index = scalars.index(after: index)
             }
 
-            let id = normalisedWords.count
+            // Plain-text input has no display-only tokens: every token is
+            // both shown and matched, so each display word gets a non-nil
+            // match index and the two arrays stay 1:1.
+            let displayID = displayWords.count
+            let matchIndex = normalisedWords.count
             normalisedWords.append(normalise(tokenSlice))
             displayWords.append(
                 ParsedScript.DisplayWord(
-                    id: id,
+                    id: displayID,
+                    matchIndex: matchIndex,
                     text: String(tokenSlice),
                     trailingSpace: hasSpace && !hasNewline,
                     trailingNewline: hasNewline
