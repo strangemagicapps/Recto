@@ -40,7 +40,7 @@
   <text class="label" x="180" y="377" text-anchor="middle">ScriptTracker</text>
 
   <path class="edge" d="M180,394 L180,456" marker-end="url(#arrow)"/>
-  <text class="edge-label" x="188" y="430">currentWordIndex</text>
+  <text class="edge-label" x="188" y="430">currentDisplayIndex</text>
 
   <rect class="node" x="100" y="462" width="160" height="44"/>
   <text class="label" x="180" y="489" text-anchor="middle">UI (SwiftUI / AppKit)</text>

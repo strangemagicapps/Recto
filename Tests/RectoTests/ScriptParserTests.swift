@@ -16,9 +16,32 @@ struct ScriptParserTests {
         #expect(parsed.displayWords.map(\.text) == ["the", "quick", "brown", "fox"])
     }
 
-    @Test func `display word ids index into the normalised array`() {
+    @Test func `display word ids run in display order`() {
         let parsed = ScriptParser.parse("the quick brown fox")
         #expect(parsed.displayWords.map(\.id) == [0, 1, 2, 3])
+    }
+
+    @Test func `every plain-text token carries a match index`() {
+        let parsed = ScriptParser.parse("the quick brown fox")
+        #expect(parsed.displayWords.map(\.matchIndex) == [0, 1, 2, 3])
+    }
+
+    @Test func `plain prose produces a 1-to-1 display and normalised mapping`() {
+        let parsed = ScriptParser.parse("the quick brown fox")
+        #expect(parsed.displayWords.count == parsed.normalisedWords.count)
+        for word in parsed.displayWords {
+            #expect(word.matchIndex == word.id)
+        }
+    }
+
+    @Test func `displayIndex maps a match index back to its display position`() {
+        let parsed = ScriptParser.parse("the quick brown fox")
+        #expect(parsed.displayIndex(forMatchIndex: 2) == 2)
+    }
+
+    @Test func `displayIndex returns nil for an out-of-range match index`() {
+        let parsed = ScriptParser.parse("the quick brown fox")
+        #expect(parsed.displayIndex(forMatchIndex: 4) == nil)
     }
 
     @Test func `interior words carry a trailing space`() {

@@ -13,7 +13,7 @@ import Observation
 /// strictly forward-only — backwards drift in the transcript never
 /// pulls the cursor backwards.
 ///
-/// `setPosition(_:)` is the manual override for user-driven scrubbing
+/// `setPosition(matchIndex:)` is the manual override for user-driven scrubbing
 /// (drag-to-scroll, tap-to-jump). It bypasses the forward-only rule and
 /// clamps to the script's valid range.
 ///
@@ -22,7 +22,7 @@ import Observation
 /// `ScriptTracker` is `@MainActor`-isolated and deliberately *not*
 /// `Sendable`. SwiftUI's observation system expects `@Observable` state
 /// to be touched on the main actor, so every property read,
-/// ``consume(transcript:)`` call, and ``setPosition(_:)`` call must
+/// ``consume(transcript:)`` call, and `setPosition` call must
 /// happen on the main actor:
 ///
 /// ```swift
@@ -41,12 +41,39 @@ public final class ScriptTracker {
     public let script: ParsedScript
 
     /// The index, into ``ParsedScript/normalisedWords``, of the next
-    /// word the tracker expects to encounter. Starts at `0`.
+    /// matchable word the tracker expects to encounter. Starts at `0`.
     ///
     /// Updated by ``consume(transcript:)`` (forward-only) and by
-    /// ``setPosition(_:)`` (any direction). Reading this is the canonical
-    /// way for a UI to know where the speaker is in the script.
-    public private(set) var currentWordIndex: Int = 0
+    /// ``setPosition(matchIndex:)`` (any direction). This indexes the *matchable*
+    /// sequence, which omits display-only tokens, so it cannot be used to
+    /// index ``ParsedScript/displayWords`` directly — use
+    /// ``currentDisplayIndex`` to locate the cursor in the displayed
+    /// script.
+    public private(set) var currentMatchIndex: Int = 0
+
+    /// The index, into ``ParsedScript/normalisedWords``, of the next word
+    /// the tracker expects to encounter.
+    ///
+    /// - Important: This name predates the split between the displayed and
+    ///   matchable token sequences and misleadingly implies a position in
+    ///   the displayed script. Use ``currentMatchIndex`` for the matcher
+    ///   position, or ``currentDisplayIndex`` to locate the cursor in
+    ///   ``ParsedScript/displayWords``.
+    @available(*, deprecated, renamed: "currentMatchIndex", message: "Use currentMatchIndex for the matcher position, or currentDisplayIndex to index displayWords.")
+    public var currentWordIndex: Int { currentMatchIndex }
+
+    /// The position in ``ParsedScript/displayWords`` that renders the word
+    /// at ``currentMatchIndex``, or `nil` when the cursor is parked one
+    /// past the final word.
+    ///
+    /// This is the convenient hook for a UI: ``currentMatchIndex`` indexes
+    /// the matchable ``ParsedScript/normalisedWords``, which omits
+    /// display-only tokens, so it cannot be used to index the displayed
+    /// script directly. This property performs the O(1) translation via
+    /// ``ParsedScript/displayIndex(forMatchIndex:)``.
+    public var currentDisplayIndex: Int? {
+        script.displayIndex(forMatchIndex: currentMatchIndex)
+    }
 
     /// A signed shift applied to the cursor after each successful match.
     ///
@@ -54,10 +81,10 @@ public final class ScriptTracker {
     /// immediately *after* the last matched word — i.e. the next word
     /// expected. Positive values push the cursor further ahead; negative
     /// values pull it back towards the matched run. Forward-only still
-    /// applies: a negative offset will never reduce ``currentWordIndex``.
+    /// applies: a negative offset will never reduce ``currentMatchIndex``.
     public var offset: Int
 
-    /// The number of normalised words ahead of ``currentWordIndex`` that
+    /// The number of normalised words ahead of ``currentMatchIndex`` that
     /// the matcher considers when searching for a probe. Wider windows
     /// are more forgiving of skipped or paraphrased text but cost more
     /// false matches.
@@ -79,7 +106,7 @@ public final class ScriptTracker {
     ///
     /// - Parameters:
     ///   - script: The parsed script to follow.
-    ///   - offset: Shift applied to ``currentWordIndex`` after each
+    ///   - offset: Shift applied to ``currentMatchIndex`` after each
     ///     successful match. Defaults to `0`.
     ///   - lookAheadWindow: How many words ahead of the cursor the
     ///     matcher searches on each ``consume(transcript:)`` call.
@@ -114,7 +141,7 @@ public final class ScriptTracker {
     /// - Parameter transcript: The cumulative recognised text so far.
     public func consume(transcript: String) {
         let words = script.normalisedWords
-        guard currentWordIndex < words.count else { return }
+        guard currentMatchIndex < words.count else { return }
 
         let tail = String(transcript.suffix(Self.tailCharacterCount))
         let probeWords = ScriptParser.parse(tail)
@@ -122,8 +149,8 @@ public final class ScriptTracker {
             .filter { !$0.isEmpty }
         guard !probeWords.isEmpty else { return }
 
-        let windowEnd = min(currentWordIndex + lookAheadWindow, words.count)
-        guard currentWordIndex < windowEnd else { return }
+        let windowEnd = min(currentMatchIndex + lookAheadWindow, words.count)
+        guard currentMatchIndex < windowEnd else { return }
 
         let probeLengths: [Int] = allowSingleWordFallback
             ? [Self.primaryProbeLength, Self.fallbackProbeLength, Self.lastResortProbeLength]
@@ -132,40 +159,110 @@ public final class ScriptTracker {
         for length in probeLengths {
             guard probeWords.count >= length else { continue }
             let probe = probeWords.suffix(length)
-            guard let matchStart = words[currentWordIndex ..< windowEnd]
+            guard let matchStart = words[currentMatchIndex ..< windowEnd]
                 .firstRange(of: probe)?.lowerBound
             else { continue }
 
             let matchEnd = matchStart + length
             let proposed = matchEnd + offset
             let clamped = min(max(proposed, 0), words.count)
-            if clamped > currentWordIndex {
-                currentWordIndex = clamped
+            if clamped > currentMatchIndex {
+                currentMatchIndex = clamped
             }
             return
         }
     }
 
-    /// Moves the cursor to `index`, clamped to the script's valid range.
+    /// How a ``ScriptTracker/setPosition(displayIndex:snapDirection:)`` call
+    /// resolves a tap that lands on a display-only token — one with no
+    /// spoken counterpart, such as a speaker name or stage direction.
+    public enum SnapDirection: Sendable {
+        /// Snap to the nearest spoken word at or after the tapped token,
+        /// falling back to the nearest spoken word before it when none
+        /// lies ahead.
+        case forward
+        /// Snap to the nearest spoken word at or before the tapped token,
+        /// falling back to the nearest spoken word after it when none
+        /// lies behind.
+        case backward
+        /// Leave the cursor where it is; perform no movement.
+        case reject
+    }
+
+    /// Moves the cursor to `matchIndex`, clamped to the script's valid
+    /// range.
     ///
     /// Negative inputs clamp to `0`; inputs at or beyond the end of the
     /// script clamp to the last valid index. Unlike matcher-driven
     /// movement, this method may move the cursor in any direction; the
     /// next ``consume(transcript:)`` call resumes from the new position.
     ///
-    /// - Parameter index: The target index in
-    ///   ``ParsedScript/normalisedWords``.
-    public func setPosition(_ index: Int) {
+    /// - Parameter matchIndex: The target index in
+    ///   ``ParsedScript/normalisedWords`` (the matchable sequence). To jump
+    ///   from a tapped displayed word instead, use
+    ///   ``setPosition(displayIndex:snapDirection:)``.
+    public func setPosition(matchIndex: Int) {
         let count = script.normalisedWords.count
         guard count > 0 else {
-            currentWordIndex = 0
+            currentMatchIndex = 0
             return
         }
-        currentWordIndex = min(max(index, 0), count - 1)
+        currentMatchIndex = min(max(matchIndex, 0), count - 1)
+    }
+
+    /// Moves the cursor to `index`, clamped to the script's valid range.
+    ///
+    /// - Parameter index: The target index in
+    ///   ``ParsedScript/normalisedWords``.
+    @available(*, deprecated, renamed: "setPosition(matchIndex:)", message: "The unlabelled index is a normalisedWords (match) index; use setPosition(matchIndex:), or setPosition(displayIndex:snapDirection:) to jump from a displayed word.")
+    public func setPosition(_ index: Int) {
+        setPosition(matchIndex: index)
+    }
+
+    /// Moves the cursor from a position in ``ParsedScript/displayWords``,
+    /// the displayed token sequence used by user-driven scrubbing
+    /// (drag-to-scroll, tap-to-jump).
+    ///
+    /// When the tapped word is spoken (its ``ParsedScript/DisplayWord/matchIndex``
+    /// is non-`nil`) the cursor moves to that word. When it is display-only
+    /// — a speaker name, stage direction, or scene heading with no spoken
+    /// counterpart — `snapDirection` decides how to resolve the tap. Like
+    /// ``setPosition(matchIndex:)``, this bypasses the forward-only rule and
+    /// may move the cursor in any direction.
+    ///
+    /// - Parameters:
+    ///   - displayIndex: The target position in
+    ///     ``ParsedScript/displayWords``. Clamped to the valid range.
+    ///   - snapDirection: How to resolve a tap on a display-only token.
+    ///     Defaults to ``SnapDirection/forward``.
+    public func setPosition(displayIndex: Int, snapDirection: SnapDirection = .forward) {
+        let display = script.displayWords
+        guard !display.isEmpty else {
+            currentMatchIndex = 0
+            return
+        }
+        let clamped = min(max(displayIndex, 0), display.count - 1)
+
+        // A spoken word resolves directly, regardless of snap direction.
+        if let matchIndex = display[clamped].matchIndex {
+            setPosition(matchIndex: matchIndex)
+            return
+        }
+
+        let ahead = display[clamped...].lazy.compactMap(\.matchIndex).first
+        let behind = display[...clamped].reversed().lazy.compactMap(\.matchIndex).first
+
+        let target: Int?
+        switch snapDirection {
+        case .forward: target = ahead ?? behind
+        case .backward: target = behind ?? ahead
+        case .reject: target = nil
+        }
+        if let target { setPosition(matchIndex: target) }
     }
 
     /// Resets the cursor to the beginning of the script.
     public func reset() {
-        currentWordIndex = 0
+        currentMatchIndex = 0
     }
 }

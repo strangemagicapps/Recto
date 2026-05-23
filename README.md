@@ -48,8 +48,8 @@ Five public types — deliberately small.
 | `SpeechService` | Actor wrapping `SpeechAnalyzer` + `SpeechTranscriber`; consumes `CMSampleBuffer`s, emits transcripts and errors via `AsyncStream`. |
 | `AudioBufferConverter` | Helper for converting `AVAudioPCMBuffer` to `CMSampleBuffer`. |
 
-See [BRIEF.md](BRIEF.md) for the full API specification, matcher
-algorithm, and design rationale.
+See the DocC documentation (the `Recto` documentation catalogue) for the
+full API reference, matcher algorithm, and design rationale.
 
 ## Usage
 
