@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.2](https://github.com/strangemagicapps/Recto/compare/0.1.1...0.1.2) (2026-05-27)
+
+
+### Features
+
+* decouple displayed tokens from matchable tokens ([#15](https://github.com/strangemagicapps/Recto/issues/15)) ([a15d997](https://github.com/strangemagicapps/Recto/commit/a15d99743d1884b9a7fb248d0cbe793e0220859f))
+* **parser:** preserve blank lines / stanza breaks in ScriptParser output ([#19](https://github.com/strangemagicapps/Recto/issues/19)) ([9219a74](https://github.com/strangemagicapps/Recto/commit/9219a74d36950162f9dd7bd6a27c8ba8c9be9ff1))
+
+
+### Documentation
+
+* Update app name from Octavo to Lilt in README ([#17](https://github.com/strangemagicapps/Recto/issues/17)) ([a2a2a05](https://github.com/strangemagicapps/Recto/commit/a2a2a051a9fa4cc171ed9a94c595087166affe0f))
+
 ## [0.1.1](https://github.com/strangemagicapps/Recto/compare/0.1.0...0.1.1) (2026-05-16)
 
 
