@@ -66,17 +66,30 @@ public nonisolated struct ParsedScript: Sendable {
         /// line. Mutually exclusive with ``trailingNewline``.
         public let trailingSpace: Bool
 
-        /// `true` when the token's trailing whitespace contained at
-        /// least one line break. Use this to render line breaks back
-        /// into the displayed script.
-        public let trailingNewline: Bool
+        /// The number of consecutive line breaks that followed the token
+        /// in the source: `0` when the next token is on the same line,
+        /// `1` for an ordinary line break, and `2` or more for a blank
+        /// line / stanza break. CRLF (`"\r\n"`) counts as a single break.
+        /// Use this to render stanza or paragraph gaps back into the
+        /// displayed script.
+        public let trailingNewlines: Int
 
-        init(id: Int, matchIndex: Int?, text: String, trailingSpace: Bool, trailingNewline: Bool) {
+        /// `true` when the token's trailing whitespace contained at
+        /// least one line break.
+        ///
+        /// - Warning: Deprecated. This boolean cannot distinguish a single
+        ///   line break from a blank line / stanza break. Use
+        ///   ``trailingNewlines`` instead — replace `word.trailingNewline`
+        ///   with `word.trailingNewlines > 0`.
+        @available(*, deprecated, message: "Use trailingNewlines instead: replace `trailingNewline` with `trailingNewlines > 0` to distinguish line breaks from stanza gaps.")
+        public var trailingNewline: Bool { trailingNewlines > 0 }
+
+        init(id: Int, matchIndex: Int?, text: String, trailingSpace: Bool, trailingNewlines: Int) {
             self.id = id
             self.matchIndex = matchIndex
             self.text = text
             self.trailingSpace = trailingSpace
-            self.trailingNewline = trailingNewline
+            self.trailingNewlines = trailingNewlines
         }
     }
 

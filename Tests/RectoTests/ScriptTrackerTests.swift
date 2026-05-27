@@ -238,7 +238,7 @@ struct ScriptTrackerTests {
                     matchIndex: matchIndex,
                     text: token.text,
                     trailingSpace: offset < tokens.count - 1,
-                    trailingNewline: false
+                    trailingNewlines: 0
                 )
             )
         }
