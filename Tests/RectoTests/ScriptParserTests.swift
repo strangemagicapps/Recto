@@ -118,9 +118,9 @@ struct ScriptParserTests {
 
     // MARK: - Line breaks
 
-    @Test func `a line break sets trailingNewline on the preceding word`() {
+    @Test func `a line break sets trailingNewlines on the preceding word`() {
         let parsed = ScriptParser.parse("first\nsecond")
-        #expect(parsed.displayWords.first?.trailingNewline == true)
+        #expect(parsed.displayWords.first?.trailingNewlines == 1)
     }
 
     @Test func `a line break clears trailingSpace on the preceding word`() {
@@ -128,14 +128,14 @@ struct ScriptParserTests {
         #expect(parsed.displayWords.first?.trailingSpace == false)
     }
 
-    @Test func `a space sets trailingSpace but not trailingNewline`() {
+    @Test func `a space leaves trailingNewlines at zero`() {
         let parsed = ScriptParser.parse("first second")
-        #expect(parsed.displayWords.first?.trailingNewline == false)
+        #expect(parsed.displayWords.first?.trailingNewlines == 0)
     }
 
-    @Test func `a trailing newline at end of input sets trailingNewline on the last word`() {
+    @Test func `a trailing newline at end of input sets trailingNewlines on the last word`() {
         let parsed = ScriptParser.parse("first\n")
-        #expect(parsed.displayWords.last?.trailingNewline == true)
+        #expect(parsed.displayWords.last?.trailingNewlines == 1)
     }
 
     // MARK: - Stanza / blank-line breaks

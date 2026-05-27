@@ -75,9 +75,13 @@ public nonisolated struct ParsedScript: Sendable {
         public let trailingNewlines: Int
 
         /// `true` when the token's trailing whitespace contained at
-        /// least one line break. Use this to render line breaks back
-        /// into the displayed script. Derived from ``trailingNewlines``;
-        /// see it to distinguish a single break from a stanza gap.
+        /// least one line break.
+        ///
+        /// - Warning: Deprecated. This boolean cannot distinguish a single
+        ///   line break from a blank line / stanza break. Use
+        ///   ``trailingNewlines`` instead — replace `word.trailingNewline`
+        ///   with `word.trailingNewlines > 0`.
+        @available(*, deprecated, message: "Use trailingNewlines instead: replace `trailingNewline` with `trailingNewlines > 0` to distinguish line breaks from stanza gaps.")
         public var trailingNewline: Bool { trailingNewlines > 0 }
 
         init(id: Int, matchIndex: Int?, text: String, trailingSpace: Bool, trailingNewlines: Int) {
