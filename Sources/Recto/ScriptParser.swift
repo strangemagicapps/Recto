@@ -49,13 +49,21 @@ public enum ScriptParser {
             }
             let tokenSlice = scalars[tokenStart..<index]
 
-            var hasNewline = false
+            var newlineCount = 0
             var hasSpace = false
+            var previousWasCarriageReturn = false
             while index < end, scalars[index].properties.isWhitespace {
-                if CharacterSet.newlines.contains(scalars[index]) {
-                    hasNewline = true
+                let scalar = scalars[index]
+                if CharacterSet.newlines.contains(scalar) {
+                    // Count logical line breaks: a CRLF pair is one break,
+                    // so don't double-count the "\n" that follows a "\r".
+                    if !(scalar == "\n" && previousWasCarriageReturn) {
+                        newlineCount += 1
+                    }
+                    previousWasCarriageReturn = scalar == "\r"
                 } else {
                     hasSpace = true
+                    previousWasCarriageReturn = false
                 }
                 index = scalars.index(after: index)
             }
@@ -71,8 +79,8 @@ public enum ScriptParser {
                     id: displayID,
                     matchIndex: matchIndex,
                     text: String(tokenSlice),
-                    trailingSpace: hasSpace && !hasNewline,
-                    trailingNewline: hasNewline
+                    trailingSpace: hasSpace && newlineCount == 0,
+                    trailingNewlines: newlineCount
                 )
             )
         }

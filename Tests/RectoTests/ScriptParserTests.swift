@@ -138,6 +138,44 @@ struct ScriptParserTests {
         #expect(parsed.displayWords.last?.trailingNewline == true)
     }
 
+    // MARK: - Stanza / blank-line breaks
+
+    @Test func `a same-line space produces zero trailing newlines`() {
+        let parsed = ScriptParser.parse("first second")
+        #expect(parsed.displayWords.first?.trailingNewlines == 0)
+    }
+
+    @Test func `a single line break produces one trailing newline`() {
+        let parsed = ScriptParser.parse("first\nsecond")
+        #expect(parsed.displayWords.first?.trailingNewlines == 1)
+    }
+
+    @Test func `a blank line between two lines produces two trailing newlines`() {
+        let parsed = ScriptParser.parse("first\n\nsecond")
+        #expect(parsed.displayWords.first?.trailingNewlines == 2)
+    }
+
+    @Test func `multiple blank lines preserve the full newline count`() {
+        let parsed = ScriptParser.parse("first\n\n\nsecond")
+        #expect(parsed.displayWords.first?.trailingNewlines == 3)
+    }
+
+    @Test func `CRLF counts as a single line break`() {
+        let parsed = ScriptParser.parse("first\r\nsecond")
+        #expect(parsed.displayWords.first?.trailingNewlines == 1)
+    }
+
+    @Test func `a CRLF blank line counts as two line breaks`() {
+        let parsed = ScriptParser.parse("first\r\n\r\nsecond")
+        #expect(parsed.displayWords.first?.trailingNewlines == 2)
+    }
+
+    @Test func `a blank line does not change the normalised words`() {
+        let parsed = ScriptParser.parse("first\n\nsecond")
+        #expect(parsed.normalisedWords == ["first", "second"])
+        #expect(parsed.displayWords.map(\.matchIndex) == [0, 1])
+    }
+
     // MARK: - Empty and minimal input
 
     @Test func `empty input produces no display words`() {
