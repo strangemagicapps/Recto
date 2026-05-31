@@ -15,6 +15,17 @@ import Foundation
 ///
 /// `ScriptParser` keeps no state and may be called from any isolation
 /// context.
+///
+/// > Note: The current plain-text sources do not yet support
+/// > *display-only* tokens — words that are shown to the reader but
+/// > deliberately excluded from matching (for example a scene heading or
+/// > a speaker name you want on screen but never spoken aloud). When
+/// > parsing plain text, every token is both displayed and matched, so
+/// > the display and match arrays stay 1:1 and each
+/// > ``ParsedScript/DisplayWord`` has a non-nil
+/// > ``ParsedScript/DisplayWord/matchIndex``. The data model already
+/// > allows display-only tokens (a `nil` `matchIndex`); a source format
+/// > that can mark them up is planned for a future release.
 public enum ScriptParser {
     /// Parses `rawText` into a ``ParsedScript``.
     ///

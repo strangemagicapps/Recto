@@ -34,6 +34,64 @@ import Observation
 ///     }
 /// }
 /// ```
+///
+/// ## Driving the tracker from a host app
+///
+/// A SwiftUI host typically parses the script once with ``ScriptParser``,
+/// holds the tracker as view state, renders ``ParsedScript/displayWords``
+/// while highlighting the word at ``currentDisplayIndex``, and feeds
+/// ``consume(transcript:)`` from a ``SpeechService`` transcript stream.
+/// Tapping a word jumps the cursor via
+/// ``setPosition(displayIndex:snapDirection:)``:
+///
+/// ```swift
+/// import Recto
+/// import SwiftUI
+///
+/// struct AutocueView: View {
+///     @State private var tracker: ScriptTracker
+///     private let speech = SpeechService()
+///
+///     init(scriptText: String) {
+///         let script = ScriptParser.parse(scriptText, title: "Act I")
+///         _tracker = State(initialValue: ScriptTracker(script: script))
+///     }
+///
+///     var body: some View {
+///         ScrollView {
+///             FlowLayout {  // any wrapping layout the app provides
+///                 ForEach(tracker.script.displayWords) { word in
+///                     Text(word.text)
+///                         .fontWeight(
+///                             word.id == tracker.currentDisplayIndex ? .bold : .regular
+///                         )
+///                         .onTapGesture {
+///                             // Snap forward past speaker names / stage directions.
+///                             tracker.setPosition(
+///                                 displayIndex: word.id,
+///                                 snapDirection: .forward
+///                             )
+///                         }
+///                 }
+///             }
+///         }
+///         .task {
+///             // A SwiftUI `.task` body is main-actor isolated, so the
+///             // @MainActor tracker can be called directly here — no
+///             // `MainActor.run` wrapper is needed.
+///             try? await speech.prepare()
+///             for await transcript in speech.transcripts {
+///                 tracker.consume(transcript: transcript)
+///             }
+///         }
+///     }
+/// }
+/// ```
+///
+/// Audio capture itself stays in the host app: capture buffers and feed
+/// them to ``SpeechService/consume(_:)`` — via ``AudioBufferConverter``
+/// when your capture API produces `AVAudioPCMBuffer`s. See ``SpeechService``
+/// for that side of the pipeline.
 @MainActor
 @Observable
 public final class ScriptTracker {
@@ -92,9 +150,9 @@ public final class ScriptTracker {
 
     /// When `true`, the matcher falls back to a single-word probe if
     /// neither the 3-word nor the 2-word probe finds a match in the
-    /// window. Quarto sets this to `false` because misfires are costly
-    /// for live surtitles; Lilt sets it to `true` to keep the autocue
-    /// moving when recognition is patchy.
+    /// window. Host apps should set this to `false` if a misfire could be
+    /// costly (e.g., live surtitling). Set it to `true` for noisy or more
+    /// forgiving apps, e.g., a handheld teleprompter.
     public let allowSingleWordFallback: Bool
 
     private static let tailCharacterCount = 80

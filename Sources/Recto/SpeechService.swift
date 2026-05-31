@@ -6,14 +6,35 @@ import Speech
 /// On-device speech-to-text service backing the Strange Magic page-format
 /// apps.
 ///
-/// ``SpeechService`` wraps the iOS 26 / macOS 26 `SpeechAnalyzer` and
-/// `SpeechTranscriber` APIs in a single Swift 6.2 actor, accepting audio
-/// as `CMSampleBuffer`s and publishing recognised text via the
-/// ``transcripts`` stream. Errors that do not terminate recognition are
-/// reported on the independent ``errors`` stream.
+/// `SpeechService` wraps the iOS 26 / macOS 26 `SpeechAnalyzer` and
+/// `SpeechTranscriber` APIs in a single actor. You feed it audio as
+/// `CMSampleBuffer`s and read recognised text back from the
+/// ``transcripts`` stream; the service owns everything in between —
+/// downloading the on-device language model, choosing an
+/// analyser-compatible audio format, and resampling each incoming buffer
+/// to match.
 ///
-/// Recognition is locked to on-device processing — there is no server
-/// fallback under any circumstance.
+/// What it gives you:
+///
+/// - **On-device only.** Recognition never contacts a server; there is no
+///   cloud fallback under any circumstance.
+/// - **Cumulative transcripts.** Every value on ``transcripts`` is the
+///   full recognised text so far — finalised text plus the latest
+///   volatile tail — so a consumer such as ``ScriptTracker`` can act on
+///   the newest value and ignore earlier ones.
+/// - **Two independent streams.** Non-fatal problems (a dropped buffer, a
+///   recoverable hiccup) arrive on ``errors`` without interrupting
+///   ``transcripts``. Fatal *setup* failures instead throw from
+///   ``prepare()``.
+/// - **Format handling for free.** ``consume(_:)`` accepts PCM buffers in
+///   any format and resamples them internally, so you never have to match
+///   the analyser's required format yourself.
+///
+/// Audio capture itself is the host app's responsibility — `SpeechService`
+/// only consumes buffers. When your capture API produces `AVAudioPCMBuffer`s
+/// (the `AVAudioEngine` family), bridge each one with ``AudioBufferConverter``
+/// first; when it already produces `CMSampleBuffer`s (for example
+/// `AVCaptureSession`), feed them straight in.
 ///
 /// ## Lifecycle
 ///
@@ -27,6 +48,60 @@ import Speech
 ///
 /// After ``finish()`` the streams are terminated and the service should
 /// be discarded; calling ``prepare()`` again is undefined.
+///
+/// ## Example
+///
+/// Capturing the microphone with `AVAudioEngine` and forwarding each
+/// buffer to the service, while observing transcripts and non-fatal
+/// errors. Start the stream consumers *before* ``prepare()`` so no early
+/// output is missed:
+///
+/// ```swift
+/// import AVFoundation
+/// import Recto
+///
+/// let service = SpeechService(locale: Locale(identifier: "en-GB"))
+///
+/// // Recognised text. Each value is the full transcript so far.
+/// Task {
+///     for await transcript in service.transcripts {
+///         print("heard:", transcript)
+///     }
+/// }
+///
+/// // Non-fatal problems; recognition keeps running.
+/// Task {
+///     for await error in service.errors {
+///         print("speech error:", error)
+///     }
+/// }
+///
+/// // Download the model if needed, then start the analyser.
+/// try await service.prepare()
+///
+/// // Feed live microphone audio. The engine hands us `AVAudioPCMBuffer`s,
+/// // so each one is bridged to a `CMSampleBuffer` before `consume(_:)`.
+/// let engine = AVAudioEngine()
+/// engine.inputNode.installTap(onBus: 0, bufferSize: 4096, format: nil) { buffer, when in
+///     let time = CMTime(value: when.sampleTime, timescale: CMTimeScale(when.sampleRate))
+///     guard let sampleBuffer = try? AudioBufferConverter.sampleBuffer(
+///         from: buffer,
+///         presentationTime: time
+///     ) else { return }
+///     Task { await service.consume(sampleBuffer) }
+/// }
+/// try engine.start()
+///
+/// // …later, when the session ends:
+/// engine.stop()
+/// engine.inputNode.removeTap(onBus: 0)
+/// await service.finish()
+/// ```
+///
+/// On first run the language model may need downloading, which can take a
+/// while. Read ``modelState`` to drive UI: it reports
+/// ``ModelState/downloading(progress:)`` (a `0.0 ... 1.0` fraction) while
+/// the asset installs and ``ModelState/ready`` once recognition can begin.
 public actor SpeechService {
 
     /// Lifecycle state of the on-device recognition model.

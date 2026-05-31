@@ -4,8 +4,8 @@ import Foundation
 /// display-ready token list, and a parallel normalised token list used
 /// for matching against speech transcripts.
 ///
-/// Construct a ``ParsedScript`` via ``ScriptParser/parse(_:title:)``;
-/// the type has no public initialiser.
+/// Construct a ``ParsedScript`` only via ``ScriptParser/parse(_:title:)``.
+/// There is no public initialiser for this type.
 ///
 /// ``ParsedScript`` is fully `Sendable` and may be passed freely between
 /// isolation domains.
