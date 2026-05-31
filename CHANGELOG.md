@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.3](https://github.com/strangemagicapps/Recto/compare/0.1.2...0.1.3) (2026-05-31)
+
+
+### Bug Fixes
+
+* **docs:** Typos and Octavo -&gt; Lilt remnants ([f0c04f8](https://github.com/strangemagicapps/Recto/commit/f0c04f81e3672bf568d92d1d98c483d82cb11274))
+
+
+### Documentation
+
+* expand DocC symbol documentation and usage examples ([#24](https://github.com/strangemagicapps/Recto/issues/24)) ([4c17cf2](https://github.com/strangemagicapps/Recto/commit/4c17cf2a2893d94d0498eba45b2d36e16cf32d91))
+* link the README to the published GitHub Pages documentation ([#25](https://github.com/strangemagicapps/Recto/issues/25)) ([1d1ece4](https://github.com/strangemagicapps/Recto/commit/1d1ece4ba22b5397a9b9cd15ec7d54e97f7970af))
+
 ## [0.1.2](https://github.com/strangemagicapps/Recto/compare/0.1.1...0.1.2) (2026-05-27)
 
 
