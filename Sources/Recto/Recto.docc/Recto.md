@@ -7,7 +7,7 @@ apps.
 
 Recto is a Swift package providing the script model, the matcher, and
 the on-device speech recognition service shared by **Quarto** (the
-macOS surtitle engine) and **Octavo** (the iOS autocue app). The
+macOS surtitle engine) and **Lilt** (the iOS autocue app). The
 package contains no UI, no persistence, and no platform-specific
 capture pipeline; consuming apps own those concerns.
 

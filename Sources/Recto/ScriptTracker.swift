@@ -4,7 +4,7 @@ import Observation
 /// An observable cursor that advances through a ``ParsedScript`` as
 /// recognised speech transcripts arrive.
 ///
-/// `ScriptTracker` is the matching engine consumed by Quarto and Octavo.
+/// `ScriptTracker` is the matching engine consumed by Quarto and Lilt.
 /// On each ``consume(transcript:)`` call it inspects the tail of the
 /// transcript, normalises it the same way ``ScriptParser`` does, and
 /// searches a sliding look-ahead window of the script for the most
@@ -93,7 +93,7 @@ public final class ScriptTracker {
     /// When `true`, the matcher falls back to a single-word probe if
     /// neither the 3-word nor the 2-word probe finds a match in the
     /// window. Quarto sets this to `false` because misfires are costly
-    /// for live surtitles; Octavo sets it to `true` to keep the autocue
+    /// for live surtitles; Lilt sets it to `true` to keep the autocue
     /// moving when recognition is patchy.
     public let allowSingleWordFallback: Bool
 

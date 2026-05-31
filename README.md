@@ -8,7 +8,7 @@ platform-specific capture pipeline.
 
 *Recto* is the right-hand page of an open book — the side a reader's eye
 falls on first. The name is part of the Strange Magic bibliographic family
-that is currently under devlopment.
+that is currently under development.
 
 ## Requirements
 
