@@ -19,13 +19,14 @@ It is rebuilt and deployed automatically on each release.
 
 ## Requirements
 
-- iOS 26.0+ / iPadOS 26.0+ / macOS 26.0+
-- Swift 6.2 (strict concurrency, main-actor-by-default isolation)
+- iOS 26.0+ / iPadOS 26.0+ / macOS 26.0+ / tvOS 26.0+ / visionOS 26.0+
+- Swift 6.3 toolchain (Xcode 26)
+- Swift 6 language mode (strict concurrency, main-actor-by-default isolation)
 - System frameworks only: `Foundation`, `Speech`, `AVFoundation`
 
 Recto uses the new `SpeechAnalyzer` + `SpeechTranscriber` APIs introduced
-in iOS 26 / macOS 26. It does **not** use the older `SFSpeechRecognizer`
-recognition API.
+in iOS 26, macOS 26 and associated OSs. It does **not** use the older
+`SFSpeechRecognizer` recognition API.
 
 ## Installation
 
