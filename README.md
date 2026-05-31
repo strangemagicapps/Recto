@@ -10,6 +10,13 @@ platform-specific capture pipeline.
 falls on first. The name is part of the Strange Magic bibliographic family
 that is currently under development.
 
+## Documentation
+
+The full API reference — including the matcher algorithm and design
+rationale — is published as DocC documentation at
+**[strangemagicapps.github.io/Recto](https://strangemagicapps.github.io/Recto/documentation/recto)**.
+It is rebuilt and deployed automatically on each release.
+
 ## Requirements
 
 - iOS 26.0+ / iPadOS 26.0+ / macOS 26.0+
@@ -48,8 +55,8 @@ Five public types — deliberately small.
 | `SpeechService` | Actor wrapping `SpeechAnalyzer` + `SpeechTranscriber`; consumes `CMSampleBuffer`s, emits transcripts and errors via `AsyncStream`. |
 | `AudioBufferConverter` | Helper for converting `AVAudioPCMBuffer` to `CMSampleBuffer`. |
 
-See the DocC documentation (the `Recto` documentation catalogue) for the
-full API reference, matcher algorithm, and design rationale.
+See the [published DocC documentation](https://strangemagicapps.github.io/Recto/documentation/recto)
+for the full API reference, matcher algorithm, and design rationale.
 
 ## Usage
 
