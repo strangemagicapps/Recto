@@ -9,6 +9,46 @@ import Foundation
 /// The conversion is identical on iOS and macOS, which is why it lives
 /// in Recto rather than in the consuming apps. The helper is stateless;
 /// every call builds a fresh format description and sample buffer.
+///
+/// ## When you need it
+///
+/// ``SpeechService`` accepts audio in exactly one form: `CMSampleBuffer`,
+/// Apple's general-purpose container for timed media samples. Some Apple
+/// audio APIs already hand you that type; others hand you
+/// `AVAudioPCMBuffer`, the container used by Apple's audio-engine APIs.
+/// This converter bridges the second case to the first. Which type you
+/// get depends only on *which API you used to capture the audio* — so
+/// find your capture method in the lists below.
+///
+/// **If you used one of these, you have `AVAudioPCMBuffer` — convert it.**
+/// These are the AVAudioEngine-family APIs, the usual route for recording
+/// live microphone input:
+///
+/// - `AVAudioEngine`: calling
+///   `installTap(onBus:bufferSize:format:block:)` on its `inputNode`
+///   repeatedly delivers `AVAudioPCMBuffer`s to your callback closure.
+///   This is by far the most common source for a live mic feed.
+/// - `AVAudioFile`: its `read(into:)` method fills an `AVAudioPCMBuffer`
+///   with audio read from a file on disk.
+///
+/// In these cases, pass each buffer through
+/// ``sampleBuffer(from:presentationTime:)`` and hand the result to
+/// ``SpeechService/consume(_:)``.
+///
+/// **If you used one of these, you already have `CMSampleBuffer` — skip
+/// this converter** and feed the buffers straight into
+/// ``SpeechService/consume(_:)``:
+///
+/// - `AVCaptureSession` with an `AVCaptureAudioDataOutput` (the same
+///   capture stack used for camera/microphone recording): your
+///   `captureOutput(_:didOutput:from:)` delegate method receives
+///   `CMSampleBuffer`s.
+/// - `AVAssetReader` with an `AVAssetReaderTrackOutput` (used to read
+///   audio out of an existing movie or audio file):
+///   `copyNextSampleBuffer()` returns `CMSampleBuffer`s.
+/// - A ReplayKit broadcast extension (used to capture system or app
+///   audio): its `processSampleBuffer(_:with:)` callback delivers
+///   `CMSampleBuffer`s.
 public enum AudioBufferConverter {
 
     /// Errors that may be thrown by

@@ -16,6 +16,14 @@ right-hand page of an open book — the side a reader's eye falls on
 first; the package sits underneath the page-format apps as the shared
 text they both rest on.
 
+The page-format apps take their names from book-folding terms. **Quarto**,
+the macOS surtitle engine, and **Lilt**, the iOS autocue app, are the two
+consumers Recto serves; both fold the same parsed script into their own
+presentation. *Lilt* was developed under the working title **Octavo** – a
+smaller, more coompact format. References to Octavo in earlier commits, issues,
+and notes describe the project now being released as Lilt — there is no separate
+Octavo app.
+
 ### What's in the box
 
 - ``ParsedScript`` — a `Sendable` value type holding the tokenised
@@ -51,11 +59,11 @@ text they both rest on.
 
 The five types compose into a single audio-to-cursor pipeline:
 
-![Recto pipeline: AVAudioPCMBuffer flows through AudioBufferConverter to CMSampleBuffer, into SpeechService, whose transcripts stream feeds ScriptTracker, whose currentDisplayIndex drives the UI.](pipeline)
+![Recto pipeline: AVAudioPCMBuffer flows through AudioBufferConverter to CMSampleBuffer, into SpeechService, whose transcripts stream feeds ScriptTracker, whose currentDisplayIndex drives the UI.](pipeline.svg)
 
 iOS apps that already produce `CMSampleBuffer`s — for example via
 `AVCaptureSession` — can skip the converter and feed buffers directly
-into ``SpeechService/consume(_:)``.
+into ``SpeechService/consume(_:)``. For more details, see ``AudioBufferConverter``.
 
 ## Topics
 
