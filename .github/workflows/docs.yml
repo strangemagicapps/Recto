@@ -31,6 +31,29 @@ jobs:
             --transform-for-static-hosting \
             --hosting-base-path Recto \
             --output-path ./docs-site
+      # DocC does not generate a landing page for the site root, so the bare
+      # base path renders DocC's in-app "page not found". Apple's recommended
+      # fix (developer.apple.com/forums/thread/709748) is to replace the root
+      # index.html with a redirect to /documentation/<target>. We use a
+      # relative URL so the repo/base path is not hardcoded.
+      - name: Redirect site root to the documentation landing page
+        run: |
+          cat > ./docs-site/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <title>Recto Documentation</title>
+              <meta http-equiv="refresh" content="0; url=documentation/recto/">
+              <link rel="canonical" href="documentation/recto/">
+              <script>window.location.replace("documentation/recto/")</script>
+            </head>
+            <body>
+              <p>If you are not redirected automatically, follow
+              <a href="documentation/recto/">the Recto documentation</a>.</p>
+            </body>
+          </html>
+          HTML
       - uses: actions/configure-pages@v6
         with:
           enablement: true
