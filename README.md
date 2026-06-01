@@ -151,9 +151,9 @@ let tracker = ScriptTracker(
 
 Releases are managed by [release-please](https://github.com/googleapis/release-please).
 Merges to `main` open or update a release PR that maintains
-`CHANGELOG.md`, bumps `version.txt`, and — when merged — creates the
-matching git tag and GitHub Release. PR titles (the squash-merge commit
-subject) should follow
+`CHANGELOG.md`, bumps the manifest `.release-please-manifest.json`, and — when
+merged — creates the matching git tag and GitHub Release. PR titles (the
+squash-merge commit subject) should follow
 [Conventional Commits](https://www.conventionalcommits.org/), e.g.:
 
 - `feat: add streaming transcript filter` → minor bump
