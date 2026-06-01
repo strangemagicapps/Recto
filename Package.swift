@@ -14,6 +14,8 @@ let package = Package(
     platforms: [
         .macOS(.v26),
         .iOS(.v26),
+        .tvOS(.v26),
+        .visionOS(.v26),
     ],
     products: [
         .library(
