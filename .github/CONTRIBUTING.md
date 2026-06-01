@@ -9,10 +9,10 @@ changes within that remit.
 
 ## Code of conduct
 
-Be respectful and constructive. We follow the spirit of the
-[Contributor Covenant](https://www.contributor-covenant.org/): assume
-good faith, keep discussion focused on the work, and make this a project
-people are glad to take part in.
+This project adheres to the [Contributor Covenant](https://www.contributor-covenant.org/)
+Code of Conduct. By participating, you are expected to uphold it. Please
+read [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) for the full text and
+for how to report unacceptable behaviour.
 
 ## Getting started
 
