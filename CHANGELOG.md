@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/strangemagicapps/Recto/compare/0.1.3...0.1.4) (2026-06-01)
+
+
+### Documentation
+
+* Update README with tvOS/visionOS requirements ([#27](https://github.com/strangemagicapps/Recto/issues/27)) ([593f00a](https://github.com/strangemagicapps/Recto/commit/593f00a15673e3cfc5929bff6bce6c9c680d2c10))
+
 ## [0.1.3](https://github.com/strangemagicapps/Recto/compare/0.1.2...0.1.3) (2026-05-31)
 
 
