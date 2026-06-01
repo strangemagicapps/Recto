@@ -3,6 +3,8 @@
 A small, shared script-following engine for the Strange Magic page-format
 apps.
 
+ [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fstrangemagicapps%2FRecto%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/strangemagicapps/Recto) [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fstrangemagicapps%2FRecto%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/strangemagicapps/Recto)
+
 ## Overview
 
 Recto is a Swift package providing the script model, the matcher, and
