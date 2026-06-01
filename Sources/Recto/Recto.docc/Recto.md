@@ -22,7 +22,7 @@ The page-format apps take their names from book-folding terms. **Quarto**,
 the macOS surtitle engine, and **Lilt**, the iOS autocue app, are the two
 consumers Recto serves; both fold the same parsed script into their own
 presentation. *Lilt* was developed under the working title **Octavo** – a
-smaller, more coompact format. References to Octavo in earlier commits, issues,
+smaller, more compact format. References to Octavo in earlier commits, issues,
 and notes describe the project now being released as Lilt — there is no separate
 Octavo app.
 
