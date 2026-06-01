@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/strangemagicapps/Recto/compare/0.1.4...0.1.5) (2026-06-01)
+
+
+### Documentation
+
+* Add shields.io badges to README and docs ([#29](https://github.com/strangemagicapps/Recto/issues/29)) ([69d2f8c](https://github.com/strangemagicapps/Recto/commit/69d2f8c8143e938295d08cfe060c9cccd21ea544))
+
 ## [0.1.4](https://github.com/strangemagicapps/Recto/compare/0.1.3...0.1.4) (2026-06-01)
 
 
