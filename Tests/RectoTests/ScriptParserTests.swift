@@ -224,3 +224,50 @@ struct ScriptParserTests {
         #expect(elapsed < .seconds(1))
     }
 }
+
+@Suite("ScriptParser segments")
+struct ScriptParserSegmentTests {
+
+    @Test func `matchable segments behave like plain-text parsing`() {
+        let parsed = ScriptParser.parse(segments: [
+            ScriptSegment(text: "Hello there"),
+            ScriptSegment(text: "How are you"),
+        ])
+        #expect(parsed.normalisedWords == ["hello", "there", "how", "are", "you"])
+        #expect(parsed.displayWords.allSatisfy { $0.matchIndex != nil })
+    }
+
+    @Test func `a non-matchable segment is display-only`() {
+        let parsed = ScriptParser.parse(segments: [
+            ScriptSegment(text: "Hello there"),
+            ScriptSegment(text: "(THUNDER)", isMatchable: false),
+            ScriptSegment(text: "How are you"),
+        ])
+        // The cue is shown verbatim but never enters the match stream.
+        #expect(parsed.displayWords.map(\.text) == ["Hello", "there", "(THUNDER)", "How", "are", "you"])
+        #expect(parsed.normalisedWords == ["hello", "there", "how", "are", "you"])
+        #expect(parsed.displayWords.first { $0.text == "(THUNDER)" }?.matchIndex == nil)
+    }
+
+    @Test func `each segment ends its own display line`() {
+        let parsed = ScriptParser.parse(segments: [
+            ScriptSegment(text: "Hello there"),
+            ScriptSegment(text: "(THUNDER)", isMatchable: false),
+            ScriptSegment(text: "How are you"),
+        ])
+        // A line break terminates every segment except the last.
+        #expect(parsed.displayWords.first { $0.text == "there" }?.trailingNewlines == 1)
+        #expect(parsed.displayWords.first { $0.text == "(THUNDER)" }?.trailingNewlines == 1)
+        #expect(parsed.displayWords.last?.trailingNewlines == 0)
+    }
+
+    @Test func `empty segments inject no blank lines`() {
+        let parsed = ScriptParser.parse(segments: [
+            ScriptSegment(text: "Hello there"),
+            ScriptSegment(text: "   "),
+            ScriptSegment(text: "How are you"),
+        ])
+        #expect(parsed.displayWords.map(\.text) == ["Hello", "there", "How", "are", "you"])
+        #expect(parsed.displayWords.first { $0.text == "there" }?.trailingNewlines == 1)
+    }
+}

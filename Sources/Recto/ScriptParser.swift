@@ -16,16 +16,13 @@ import Foundation
 /// `ScriptParser` keeps no state and may be called from any isolation
 /// context.
 ///
-/// > Note: The current plain-text sources do not yet support
-/// > *display-only* tokens — words that are shown to the reader but
-/// > deliberately excluded from matching (for example a scene heading or
-/// > a speaker name you want on screen but never spoken aloud). When
-/// > parsing plain text, every token is both displayed and matched, so
-/// > the display and match arrays stay 1:1 and each
-/// > ``ParsedScript/DisplayWord`` has a non-nil
-/// > ``ParsedScript/DisplayWord/matchIndex``. The data model already
-/// > allows display-only tokens (a `nil` `matchIndex`); a source format
-/// > that can mark them up is planned for a future release.
+/// > Note: Plain-text `parse(_:title:)` produces no *display-only* tokens:
+/// > every token is both displayed and matched, so the display and match
+/// > arrays stay 1:1 and each ``ParsedScript/DisplayWord`` has a non-nil
+/// > ``ParsedScript/DisplayWord/matchIndex``. To mark tokens that are shown
+/// > but never matched (for example a sound cue that is surtitled but never
+/// > spoken aloud), use ``parse(segments:title:)`` with segments flagged
+/// > ``ScriptSegment/isMatchable`` `false`.
 public enum ScriptParser {
     /// Parses `rawText` into a ``ParsedScript``.
     ///
@@ -43,8 +40,87 @@ public enum ScriptParser {
     ) -> ParsedScript {
         var displayWords: [ParsedScript.DisplayWord] = []
         var normalisedWords: [String] = []
+        // Plain text is all matchable: every token is both shown and matched,
+        // so the display and match arrays stay 1:1.
+        appendTokens(of: rawText,
+                     matchable: true,
+                     into: &displayWords,
+                     normalisedWords: &normalisedWords)
+        return ParsedScript(
+            title: title,
+            displayWords: displayWords,
+            normalisedWords: normalisedWords
+        )
+    }
 
-        let scalars = rawText.unicodeScalars
+    /// Parses an ordered list of ``ScriptSegment`` into a ``ParsedScript``,
+    /// one segment per display line.
+    ///
+    /// Tokens from a segment with ``ScriptSegment/isMatchable`` `false` become
+    /// *display-only* words: they appear in ``ParsedScript/displayWords`` with a
+    /// `nil` ``ParsedScript/DisplayWord/matchIndex`` and contribute nothing to
+    /// ``ParsedScript/normalisedWords``, so the matcher shows them but never
+    /// expects to hear them (a sound cue, say). Matchable segments behave just
+    /// like ``parse(_:title:)``.
+    ///
+    /// Segments are separated by a single line break in the display stream;
+    /// empty segments (no tokens) are skipped without inserting a break.
+    ///
+    /// - Parameters:
+    ///   - segments: The script's segments, in document order.
+    ///   - title: A human-readable title. Defaults to the empty string.
+    /// - Returns: A parsed value whose match stream omits display-only tokens.
+    public static nonisolated func parse(
+        segments: [ScriptSegment],
+        title: String = ""
+    ) -> ParsedScript {
+        var displayWords: [ParsedScript.DisplayWord] = []
+        var normalisedWords: [String] = []
+
+        for segment in segments {
+            let countBefore = displayWords.count
+            appendTokens(of: segment.text,
+                         matchable: segment.isMatchable,
+                         into: &displayWords,
+                         normalisedWords: &normalisedWords)
+
+            // End the previous segment's line where this one begins, but only
+            // once this segment actually contributed words — so empty segments
+            // don't inject blank lines and the final word keeps no trailing
+            // break (matching `parse(_:title:)`).
+            if displayWords.count > countBefore, countBefore > 0 {
+                let boundary = countBefore - 1
+                let previous = displayWords[boundary]
+                if previous.trailingNewlines == 0 {
+                    displayWords[boundary] = ParsedScript.DisplayWord(
+                        id: previous.id,
+                        matchIndex: previous.matchIndex,
+                        text: previous.text,
+                        trailingSpace: false,
+                        trailingNewlines: 1
+                    )
+                }
+            }
+        }
+
+        return ParsedScript(
+            title: title,
+            displayWords: displayWords,
+            normalisedWords: normalisedWords
+        )
+    }
+
+    /// Tokenises `text` on Unicode whitespace and appends the tokens to the
+    /// running display/normalised arrays. When `matchable` is `false` the tokens
+    /// are display-only: they get a `nil` `matchIndex` and add nothing to
+    /// `normalisedWords`.
+    private static nonisolated func appendTokens(
+        of text: String,
+        matchable: Bool,
+        into displayWords: inout [ParsedScript.DisplayWord],
+        normalisedWords: inout [String]
+    ) {
+        let scalars = text.unicodeScalars
         var index = scalars.startIndex
         let end = scalars.endIndex
 
@@ -79,15 +155,16 @@ public enum ScriptParser {
                 index = scalars.index(after: index)
             }
 
-            // Plain-text input has no display-only tokens: every token is
-            // both shown and matched, so each display word gets a non-nil
-            // match index and the two arrays stay 1:1.
-            let displayID = displayWords.count
-            let matchIndex = normalisedWords.count
-            normalisedWords.append(normalise(tokenSlice))
+            let matchIndex: Int?
+            if matchable {
+                matchIndex = normalisedWords.count
+                normalisedWords.append(normalise(tokenSlice))
+            } else {
+                matchIndex = nil
+            }
             displayWords.append(
                 ParsedScript.DisplayWord(
-                    id: displayID,
+                    id: displayWords.count,
                     matchIndex: matchIndex,
                     text: String(tokenSlice),
                     trailingSpace: hasSpace && newlineCount == 0,
@@ -95,12 +172,6 @@ public enum ScriptParser {
                 )
             )
         }
-
-        return ParsedScript(
-            title: title,
-            displayWords: displayWords,
-            normalisedWords: normalisedWords
-        )
     }
 
     private static nonisolated func normalise(
