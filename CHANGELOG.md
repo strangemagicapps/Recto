@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.6](https://github.com/strangemagicapps/Recto/compare/0.1.5...0.1.6) (2026-07-27)
+
+
+### Features
+
+* add segment parser for display-only words ([#36](https://github.com/strangemagicapps/Recto/issues/36)) ([d03c0d4](https://github.com/strangemagicapps/Recto/commit/d03c0d42ac81a1d00e87bbce46248f712295777a))
+* segment parser for display-only words ([#34](https://github.com/strangemagicapps/Recto/issues/34)) ([54f2728](https://github.com/strangemagicapps/Recto/commit/54f2728db110bf1de2696412102f4731ee7333fc))
+
+
+### Documentation
+
+* add contributing guidelines and code of conduct ([#33](https://github.com/strangemagicapps/Recto/issues/33)) ([0aad5f5](https://github.com/strangemagicapps/Recto/commit/0aad5f5efb9849ecd79ebd0fca826dddb8660c06))
+* fix typo in Recto.docc overview (coompact -&gt; compact) ([d185c5b](https://github.com/strangemagicapps/Recto/commit/d185c5b390eefe71a52c5eb48dcf9893cb5dee8a))
+* Update build badge ([d88cee5](https://github.com/strangemagicapps/Recto/commit/d88cee56aab5c14b485c28df7b6aa5ff4e5185b0))
+* Use correct repo URL in package example ([05350c8](https://github.com/strangemagicapps/Recto/commit/05350c8659f835a3cfa8c40f83520f219dc4f6dd))
+
 ## [0.1.5](https://github.com/strangemagicapps/Recto/compare/0.1.4...0.1.5) (2026-06-01)
 
 
