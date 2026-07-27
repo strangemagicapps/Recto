@@ -19,9 +19,12 @@ import Speech
 /// - **On-device only.** Recognition never contacts a server; there is no
 ///   cloud fallback under any circumstance.
 /// - **Cumulative transcripts.** Every value on ``transcripts`` is the
-///   full recognised text so far — finalised text plus the latest
-///   volatile tail — so a consumer such as ``ScriptTracker`` can act on
-///   the newest value and ignore earlier ones.
+///   recognised text so far — finalised text plus the latest volatile
+///   tail — so a consumer such as ``ScriptTracker`` can act on the newest
+///   value and ignore earlier ones. The finalised part is capped at a
+///   trailing window (see ``transcripts``); recognition sessions can run
+///   for hours, and nothing consumes more than the last few dozen
+///   characters.
 /// - **Two independent streams.** Non-fatal problems (a dropped buffer, a
 ///   recoverable hiccup) arrive on ``errors`` without interrupting
 ///   ``transcripts``. Fatal *setup* failures instead throw from
@@ -160,6 +163,16 @@ public actor SpeechService {
     /// Cumulative recognised text, emitted on every transcription
     /// update.
     ///
+    /// Cumulative within a bounded window, not from the beginning of
+    /// time: the finalised text is trimmed to its last
+    /// ``retainedCharacterCount`` characters, always at a word boundary,
+    /// so a performance lasting hours does not accumulate a string that
+    /// is re-copied on every update. Values remain a growing suffix of
+    /// what was said; only the far head is dropped. Consumers here look
+    /// at the last 80 characters at most, so the window is wide enough to
+    /// be invisible to them — but do not treat a value as a complete
+    /// record of the session.
+    ///
     /// The stream remains open across analyser sessions; only
     /// ``finish()`` (or deallocation) terminates it. Consumers may
     /// iterate it on any actor.
@@ -188,6 +201,14 @@ public actor SpeechService {
     private var finalisedText: String = ""
     private var volatileText: String = ""
     private var isFinished: Bool = false
+
+    /// How much finalised text to keep behind the newest words.
+    ///
+    /// An order of magnitude more than any consumer reads —
+    /// ``ScriptTracker`` probes the last 80 characters — so trimming can
+    /// never remove something a matcher was about to use, while still
+    /// bounding what an unattended show accumulates over three hours.
+    static let retainedCharacterCount = 1_000
 
     /// Creates a new ``SpeechService`` for the given locale.
     ///
@@ -397,6 +418,7 @@ public actor SpeechService {
                 finalisedText.append(" ")
             }
             finalisedText.append(text)
+            finalisedText = Self.trimmedToWindow(finalisedText)
             volatileText = ""
         } else {
             volatileText = text
@@ -411,6 +433,20 @@ public actor SpeechService {
             cumulative = finalisedText + " " + volatileText
         }
         transcriptsContinuation.yield(cumulative)
+    }
+
+    /// Keeps the last ``retainedCharacterCount`` characters, cut at a word
+    /// boundary so the result never opens mid-word — a half word would
+    /// otherwise become a bogus probe for whatever is matching against it.
+    ///
+    /// Pure and `static` so the windowing rule can be tested without an
+    /// analyser, a microphone, or a locale model.
+    static func trimmedToWindow(_ text: String) -> String {
+        guard text.count > retainedCharacterCount else { return text }
+
+        let tail = text.suffix(retainedCharacterCount)
+        guard let firstSpace = tail.firstIndex(of: " ") else { return String(tail) }
+        return String(tail[tail.index(after: firstSpace)...])
     }
 
     private func handleAnalyserFailure(_ error: any Error) {
